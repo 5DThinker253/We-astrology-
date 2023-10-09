@@ -27,3 +27,35 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+version: 2.1
+
+orbs:
+  node: circleci/node@5.0.0
+
+parameters:
+  build_type:
+    type: enum
+    enum: [debug, release]
+    default: debug
+  environment:
+    type: enum
+    enum: [staging, production]
+    default: staging
+
+jobs:
+  build:
+    executor: node/default
+    steps:
+      - checkout
+      - node/install
+      - run: npm run test
+      - deploy:
+            command: npm run deploy
+
+workflows:
+  build-and-deploy:
+    when: equal: [pipeline.parameters.build_type, "release"]
+    jobs:
+      - build
+      - deploy:
+            environment: << pipeline.parameters.environment >>
